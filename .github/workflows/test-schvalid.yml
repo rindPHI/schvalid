@@ -26,9 +26,8 @@ jobs:
         pip install -e .[dev,test]
     - name: Test with pytest
       run: |
-        python3 -m pytest --html=report.html --self-contained-html tests/
-        python3 -m coverage lcov
+        (cd tests/ && python3 -m pytest --html=report.html --self-contained-html .)
     - uses: actions/upload-artifact@v3
       with:
         name: Test Report
-        path: report.html
+        path: tests/report.html

@@ -1,3 +1,4 @@
+import os
 import unittest
 
 from schvalid.tools import select_xpath

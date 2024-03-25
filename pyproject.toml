@@ -48,3 +48,5 @@ dev = [
 version = {attr = "schvalid.__version__"}
 readme = {file = ["README.md"], content-type = "text/markdown"}
 
+[tool.setuptools]
+include-package-data = true  # `true` is the default value
