@@ -1,0 +1,42 @@
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "schvalid"
+authors = [
+  { name="Dominic Steinhöfel", email="dominic.steinhoefel@cispa.de" },
+]
+description = "Validation of XML files agains Schematron schemas"
+license = { file="LICENSE" }
+requires-python = ">=3.10"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+]
+dynamic = ["version", "readme"]
+
+dependencies = [
+    "lxml>=5.1.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest-pycharm>=0.7.0",
+    "pytest>=7.1.2",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/rindPHI/schvalid/"
+"Bug Tracker" = "https://github.com/rindPHI/schvalid/issues"
+
+[tool.setuptools.dynamic]
+version = {attr = "schvalid.__version__"}
+readme = {file = ["README.md"], content-type = "text/markdown"}
+

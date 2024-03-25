@@ -14,14 +14,22 @@ class TestTools(unittest.TestCase):
 
         zugferd_constraint = "(ram:BasisAmount)"
 
-        self.assertTrue(
-            select_xpath(
-                "resources/zugferd_2p0_EN16931_Miete.pdf.xml",
-                zugferd_constraint,
-                context_xpath="//ram:ApplicableHeaderTradeSettlement/ram:ApplicableTradeTax",
+        with open("resources/zugferd_2p0_EN16931_Miete.pdf.xml", "rb") as xml_file:
+            context = select_xpath(
+                xml_file,
+                "//ram:ApplicableHeaderTradeSettlement/ram:ApplicableTradeTax",
                 namespaces=namespaces,
-            ),
-        )
+            )[0]
+
+        with open("resources/zugferd_2p0_EN16931_Miete.pdf.xml", "rb") as xml_file:
+            self.assertTrue(
+                select_xpath(
+                    xml_file,
+                    zugferd_constraint,
+                    context_elem=context,
+                    namespaces=namespaces,
+                ),
+            )
 
     def test_select_xpath_complex_zugferd_vat_constraint(self):
         namespaces = {
@@ -62,15 +70,23 @@ or (
     and (round(xs:decimal(ram:CalculatedAmount)) = 0)
 )"""
 
-        self.assertEqual(
-            (True,),
-            select_xpath(
-                "resources/zugferd_2p0_EN16931_Miete.pdf.xml",
-                zugferd_constraint,
-                context_xpath="//ram:ApplicableHeaderTradeSettlement/ram:ApplicableTradeTax",
+        with open("resources/zugferd_2p0_EN16931_Miete.pdf.xml", "rb") as xml_file:
+            context = select_xpath(
+                xml_file,
+                "//ram:ApplicableHeaderTradeSettlement/ram:ApplicableTradeTax",
                 namespaces=namespaces,
-            ),
-        )
+            )[0]
+
+        with open("resources/zugferd_2p0_EN16931_Miete.pdf.xml", "rb") as xml_file:
+            self.assertEqual(
+                True,
+                select_xpath(
+                    xml_file,
+                    zugferd_constraint,
+                    context_elem=context,
+                    namespaces=namespaces,
+                ),
+            )
 
     def test_select_xpath_complex_zugferd_total_valid_constraint(self):
         namespaces = {
@@ -96,15 +112,23 @@ or (
             )
         )"""
 
-        self.assertEqual(
-            (True,),
-            select_xpath(
-                "resources/zugferd_2p0_EN16931_Miete.pdf.xml",
-                zugferd_constraint,
-                context_xpath="//ram:SpecifiedTradeSettlementHeaderMonetarySummation",
+        with open("resources/zugferd_2p0_EN16931_Miete.pdf.xml", "rb") as xml_file:
+            context = select_xpath(
+                xml_file,
+                "//ram:SpecifiedTradeSettlementHeaderMonetarySummation",
                 namespaces=namespaces,
-            ),
-        )
+            )[0]
+
+        with open("resources/zugferd_2p0_EN16931_Miete.pdf.xml", "rb") as xml_file:
+            self.assertEqual(
+                True,
+                select_xpath(
+                    xml_file,
+                    zugferd_constraint,
+                    context_elem=context,
+                    namespaces=namespaces,
+                ),
+            )
 
     def test_select_xpath_complex_zugferd_total_invalid_constraint(self):
         namespaces = {
@@ -130,15 +154,25 @@ or (
             )
         )"""
 
-        self.assertEqual(
-            (False,),
-            select_xpath(
-                "resources/zugferd_2p0_EN16931_Miete.pdf.invalid.xml",
-                zugferd_constraint,
-                context_xpath="//ram:SpecifiedTradeSettlementHeaderMonetarySummation",
+        with open("resources/zugferd_2p0_EN16931_Miete.pdf.invalid.xml", "rb") as xml_file:
+            context = select_xpath(
+                xml_file,
+                "//ram:SpecifiedTradeSettlementHeaderMonetarySummation",
                 namespaces=namespaces,
-            ),
-        )
+            )[0]
+
+        with open(
+            "resources/zugferd_2p0_EN16931_Miete.pdf.invalid.xml", "rb"
+        ) as xml_file:
+            self.assertEqual(
+                False,
+                select_xpath(
+                    xml_file,
+                    zugferd_constraint,
+                    context_elem=context,
+                    namespaces=namespaces,
+                ),
+            )
 
 
 if __name__ == "__main__":

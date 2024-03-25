@@ -1,10 +1,11 @@
-from typing import Tuple, Optional, Any, Mapping
+import os
+import re
+from typing import Optional, Any, Mapping, IO
 
 import elementpath
 from elementpath.xpath3 import XPath3Parser
 from lxml import etree
-from lxml import isoschematron
-from lxml.etree import _XSLTResultTree
+from lxml.etree import _Element, _ElementTree
 
 
 class FileResolver(etree.Resolver):
@@ -26,79 +27,78 @@ class FileResolver(etree.Resolver):
         return self.resolve_filename(url, context)
 
 
-def validate_against_schematron(
-    xml_file_path: str, schematron_file_path: str, *additional_locations: str
-) -> Tuple[bool, _XSLTResultTree]:
-    with (
-        open(schematron_file_path, "rb") as schematron_file,
-        open(xml_file_path, "rb") as xml_file,
-    ):
-        parser = etree.XMLParser()
-        parser.resolvers.add(FileResolver(*additional_locations))
-        xml_doc = etree.parse(xml_file, parser)
-        sch_doc = etree.parse(schematron_file, parser)
+XMLElement = _Element | _ElementTree
 
-        schematron = isoschematron.Schematron(sch_doc, store_report=True)
-        result = schematron.validate(xml_doc)
-
-        return result, schematron.validation_report
-
-
-def validate_against_xsd(
-    xml_file_path: str, xsd_path: str
-) -> Tuple[bool, Optional[str]]:
-    with open(xsd_path, "rb") as xsd_file, open(xml_file_path, "rb") as xml_file:
-        parser = etree.XMLParser()
-        parser.resolvers.add(FileResolver())
-        xml_doc = etree.parse(xml_file, parser)
-        xmlschema_doc = etree.parse(xsd_file, parser)
-
-        xmlschema = etree.XMLSchema(xmlschema_doc)
-        result = xmlschema.validate(xml_doc)
-
-        return result, str(xmlschema.error_log.last_error)
+DOCUMENT_FUNCTION_PATTERN = re.compile(
+    r"\s*document\s*\(\s*'(?P<q1>[^']+)'\s*\)|"
+    + r'\s*document\s*\(\s*"(?P<q2>[^"]+)"\s*\)'
+)
 
 
 def select_xpath(
-    xml_file_path: str,
+    xml_file: IO | XMLElement,
     xpath: str,
-    context_xpath=".",
+    context_elem: Optional[XMLElement] = None,
     namespaces: Optional[Mapping[str, str]] = None,
+    variables=None,
+    wd: str = os.getcwd(),
 ) -> Any:
     """
+    This function selects nodes from an XML file using an XPath expression.
 
-    :param xml_file_path:
-    :param xpath:
-    :param context_xpath:
-    :param namespaces:
+    :param xml_file: The XML file to select nodes from.
+    :param xpath: The XPath expression to use.
+    :param context_elem: The context element to use for the XPath expression.
+        The default is the current context :code:`.`.
+    :param namespaces: The namespaces used in the document: a mapping of
+        prefixes to URIs.
+    :param variables: The variables used in the XPath expression: a mapping
+        of variable names to concrete values.
+    :param wd: The working directory to use for the :code:`document` function,
+        which allows loading an external XML resource document.
     :return: A list with XPath nodes or a basic type for
         expressions based on a function or literal.
     """
 
-    with open(xml_file_path, "rb") as xml_file:
-        parser = etree.XMLParser()
-        parser.resolvers.add(FileResolver())
-        xml_doc = etree.parse(xml_file, parser)
+    variables = variables or {}
 
-        context_elems = elementpath.select(
+    parser = etree.XMLParser()
+    parser.resolvers.add(FileResolver())
+
+    document_function_match = DOCUMENT_FUNCTION_PATTERN.match(xpath)
+    if document_function_match:
+        q1, q2 = document_function_match.group("q1", "q2")
+        if not wd.endswith(os.sep):
+            wd += os.sep
+        with open(wd + (q1 or q2), "rb") as external_xml_file:
+            xml_doc = etree.parse(external_xml_file, parser)
+
+        xpath = xpath[document_function_match.end() :]
+
+        # A context element is not supported with document() function.
+        context_elem = None
+    else:
+        xml_doc = (
+            xml_file
+            if isinstance(xml_file, XMLElement)
+            else etree.parse(xml_file, parser)
+        )
+
+    return (
+        elementpath.select(
             xml_doc,
-            context_xpath,
+            xpath,
             parser=XPath3Parser,
             namespaces=namespaces,
+            item=context_elem,
+            variables=variables,
         )
-
-        return tuple(
-            filter(
-                lambda elem: not isinstance(elem, list) or elem,
-                tuple(
-                    elementpath.select(
-                        xml_doc,
-                        xpath,
-                        parser=XPath3Parser,
-                        namespaces=namespaces,
-                        item=context_elem
-                    )
-                    for context_elem in context_elems
-                )
-            )
+        if context_elem is not None
+        else elementpath.select(
+            xml_doc,
+            xpath,
+            parser=XPath3Parser,
+            namespaces=namespaces,
+            variables=variables,
         )
+    )
