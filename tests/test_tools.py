@@ -154,7 +154,9 @@ or (
             )
         )"""
 
-        with open("resources/zugferd_2p0_EN16931_Miete.pdf.invalid.xml", "rb") as xml_file:
+        with open(
+            "resources/zugferd_2p0_EN16931_Miete.pdf.invalid.xml", "rb"
+        ) as xml_file:
             context = select_xpath(
                 xml_file,
                 "//ram:SpecifiedTradeSettlementHeaderMonetarySummation",
