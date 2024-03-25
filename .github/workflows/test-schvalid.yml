@@ -1,4 +1,4 @@
-name: Test ISLa
+name: Test schvalid
 
 on:
   push:
