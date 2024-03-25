@@ -24,6 +24,7 @@ dynamic = ["version", "readme"]
 
 dependencies = [
     "lxml>=5.1.0",
+    "elementpath>=4.4.0",
 ]
 
 [project.optional-dependencies]

@@ -1,1 +1,2 @@
+elementpath>=4.4.0
 lxml>=5.1.0
